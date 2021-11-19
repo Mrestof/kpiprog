@@ -1,0 +1,1 @@
+gcc main.c; ./a.out ../data/some_junk compressed_junk
