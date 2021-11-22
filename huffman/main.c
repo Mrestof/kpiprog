@@ -60,11 +60,13 @@ int calc_freq(const char *input) {
 
 int build_tree() {
   unsigned char indices[256]; // array of corresponding indices for `freq` array
-  int i, k = 1, r = 0, l = 0;
+  int i, k = 1, r = 255, l = 0;
   node *leaves[1024], *tmp;
 
   for (i = 0; i < 256; i++) {
     indices[i] = i;
+    if(freq[i]==0)
+      l++;
   }
 
   while (k > 0) { // sort `indices` arr
@@ -87,6 +89,24 @@ int build_tree() {
     leaves[indices[i]]->c = i;
     leaves[indices[i]]->freq = freq[indices[i]];
   }
+  
+  
+  
+    while(r!=l){  //Создание дерева
+        zz.freq = leaves[l]->freq + leaves[l+1]->freq;
+        zz.right=leaves[l+1];
+        zz.left=leaves[l];
+        l+=2;
+        j=r;
+        while ((j>l)&&(zz.freq<leaves[j]->freq)){
+            leaves[j+1]=leaves[j];
+            j--;
+        }
+        leaves[j]->freq=zz.freq;
+        leaves[j]->left=zz.left;
+        leaves[j]->right=zz.right;
+        r++;
+    }
 
   return 0;
 }
