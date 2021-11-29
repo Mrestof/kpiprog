@@ -42,8 +42,6 @@ int calc_freq(const char *input) {
 
   // by default pointer is pointing to NULL
   if ((inp = fopen(input, "rb")) == NULL) { // exit if file can't be opened
-    printf("%p\n", (void *)inp);
-    printf("%p\n", (void *)&inp);
     return 1;
   }
 
@@ -57,7 +55,7 @@ int calc_freq(const char *input) {
   return 0;
 }
 
-int build_tree() {
+int build_tree() { //Готове дерево
   unsigned char indices[256]; // array of corresponding indices for `freq` array
   int i, k = 1, r = 255, l = 0, summ=0;
   node *leaves[256*2-1], *tmp;
@@ -80,9 +78,7 @@ int build_tree() {
       }
     }
   }
-  for (int i = 249; i < 256; ++i) { // print out the entire `freq` array
-    printf("%d:  %lu\n", i, freq[indices[i]]);
-  }
+
   for (i = 0; i < 511; i++) {
     leaves[i] = (node *) malloc(sizeof(node));
   }
@@ -92,8 +88,6 @@ int build_tree() {
       leaves[i]->freq = freq[indices[i]];
   }
 
-
-    printf("%d: %d\n ", summ, l);
     tmp = (node *)malloc(sizeof(node));
     while(l<r)
     {
@@ -105,23 +99,21 @@ int build_tree() {
       i = r;
       while ((tmp->freq < leaves[i]->freq) && (i > l)) //Сдвиг по фазе
       {
-        leaves[i+1] = leaves[i];
-        printf("[%d: %lu] -> [%d: %lu] \n", i, leaves[i]->freq, i+1, leaves[i+1]->freq);
+        leaves[i+1]->freq = leaves[i]->freq;
+        leaves[i+1]->left = leaves[i]->left;
+        leaves[i+1]->right = leaves[i]->right;
         i--;
       }
 
-
+      i++;
       leaves[i]->freq = tmp->freq;
       leaves[i]->left = tmp->left;
       leaves[i]->right = tmp->right;
 
       r++;
-
     }
-  for (int i = 249; i < r; ++i) { // print out the entire `freq` array
-    printf("%d:  %lu\n", i, leaves[i]->freq);
-  }
-    printf("%d: %lu\n ",r, leaves[r-1]->freq);
+
+    printf("%lu\n",leaves[r]->freq);
 
 
 
