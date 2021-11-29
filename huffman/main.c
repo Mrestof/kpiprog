@@ -8,13 +8,15 @@ typedef struct _node {
   struct _node *left, *right;
   unsigned long freq;
   unsigned char c;
+  char *code;
 } node;
 unsigned long freq[256]; // arr of frequencies, index corresponds to char code
 node *tree;
-
+int l,r;
+char *codes[256];
 int calc_freq(const char *input);
-int build_tree();
-int compress(const char *input, const char *output);
+node *build_tree();
+int compress(node *tmp);
 
 int main(int argc, char **argv) {
   int res;
@@ -28,7 +30,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  build_tree();
+  compress(build_tree());
   return 0;
 }
 
@@ -55,9 +57,11 @@ int calc_freq(const char *input) {
   return 0;
 }
 
-int build_tree() { //Готове дерево
+node *build_tree() { //Готове дерево
   unsigned char indices[256]; // array of corresponding indices for `freq` array
-  int i, k = 1, r = 255, l = 0, summ=0;
+  int i, k = 1, summ=0;
+  l=0;
+  r=255;
   node *leaves[256*2-1], *tmp;
 
   for (i = 0; i < 256; i++) {
@@ -112,10 +116,23 @@ int build_tree() { //Готове дерево
 
       r++;
     }
+  return tmp;
+}
 
-    printf("%lu\n",leaves[r]->freq);
-
-
+int compress(node *tmp){
+  if(tmp->c>0) {
+    codes[tmp->c]=malloc(sizeof(tmp->code));
+    codes[tmp->c]=tmp->code;
+    return 0;
+  }
+  tmp->right->code = malloc(sizeof(tmp->code)+1);
+  tmp->left->code = malloc(sizeof(tmp->code)+1);
+  tmp->right->code = tmp->code;
+  strncat(tmp->right->code,"0",1);
+  tmp->left->code = tmp->code;
+  strncat(tmp->left->code,"1",1);
+  compress(tmp->right);
+  compress(tmp->left);
 
   return 0;
 }
