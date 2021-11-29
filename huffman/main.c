@@ -27,9 +27,8 @@ int main(int argc, char **argv) {
     printf("Error  in  calc_freq!  %s\n", strerror(errno));
     return 1;
   }
-  for (int i = 0; i < 256; ++i) { // print out the entire `freq` array
-    printf("%d:  %lu\n", i, freq[i]);
-  }
+
+  build_tree();
   return 0;
 }
 
@@ -49,7 +48,7 @@ int calc_freq(const char *input) {
   }
 
   do {
-    n = fread(buff, BLOCKSIZE, 1, inp);
+    n = fread(buff, sizeof (char), 1, inp);
     for (int i = 0; i < n; ++i) {
       freq[buff[i]]++;
     }
@@ -60,11 +59,12 @@ int calc_freq(const char *input) {
 
 int build_tree() {
   unsigned char indices[256]; // array of corresponding indices for `freq` array
-  int i, k = 1, r = 255, l = 0;
-  node *leaves[1024], *tmp;
+  int i, k = 1, r = 255, l = 0, summ=0;
+  node *leaves[256*2-1], *tmp;
 
   for (i = 0; i < 256; i++) {
     indices[i] = i;
+    summ+=freq[i];
     if(freq[i]==0)
       l++;
   }
@@ -80,33 +80,50 @@ int build_tree() {
       }
     }
   }
-
-  for (i = 0; i < 256; i++) {
-    if (freq[indices[i]] == 0)
-      continue;
-    r++;
-    leaves[indices[i]] = (node *)malloc(sizeof(node));
-    leaves[indices[i]]->c = i;
-    leaves[indices[i]]->freq = freq[indices[i]];
+  for (int i = 249; i < 256; ++i) { // print out the entire `freq` array
+    printf("%d:  %lu\n", i, freq[indices[i]]);
   }
-  
-  
-  
-    while(r!=l){  //Создание дерева
-        zz.freq = leaves[l]->freq + leaves[l+1]->freq;
-        zz.right=leaves[l+1];
-        zz.left=leaves[l];
-        l+=2;
-        j=r;
-        while ((j>l)&&(zz.freq<leaves[j]->freq)){
-            leaves[j+1]=leaves[j];
-            j--;
-        }
-        leaves[j]->freq=zz.freq;
-        leaves[j]->left=zz.left;
-        leaves[j]->right=zz.right;
-        r++;
+  for (i = 0; i < 511; i++) {
+    leaves[i] = (node *) malloc(sizeof(node));
+  }
+  for (i = 0; i < 256; i++)
+  {
+      leaves[i]->c = indices[i];
+      leaves[i]->freq = freq[indices[i]];
+  }
+
+
+    printf("%d: %d\n ", summ, l);
+    tmp = (node *)malloc(sizeof(node));
+    while(l<r)
+    {
+
+      tmp->freq = leaves[l]->freq + leaves[l+1]->freq;
+      tmp->right = leaves[l+1];
+      tmp->left = leaves[l];
+      l+=2;
+      i = r;
+      while ((tmp->freq < leaves[i]->freq) && (i > l)) //Сдвиг по фазе
+      {
+        leaves[i+1] = leaves[i];
+        printf("[%d: %lu] -> [%d: %lu] \n", i, leaves[i]->freq, i+1, leaves[i+1]->freq);
+        i--;
+      }
+
+
+      leaves[i]->freq = tmp->freq;
+      leaves[i]->left = tmp->left;
+      leaves[i]->right = tmp->right;
+
+      r++;
+
     }
+  for (int i = 249; i < r; ++i) { // print out the entire `freq` array
+    printf("%d:  %lu\n", i, leaves[i]->freq);
+  }
+    printf("%d: %lu\n ",r, leaves[r-1]->freq);
+
+
 
   return 0;
 }
