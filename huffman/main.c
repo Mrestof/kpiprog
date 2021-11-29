@@ -11,7 +11,6 @@ typedef struct _node {
   char *code;
 } node;
 unsigned long freq[256]; // arr of frequencies, index corresponds to char code
-node *tree;
 int l,r;
 char *codes[256];
 int calc_freq(const char *input);
@@ -59,7 +58,8 @@ int calc_freq(const char *input) {
 
 node *build_tree() { //Готове дерево
   unsigned char indices[256]; // array of corresponding indices for `freq` array
-  int i, k = 1, summ=0;
+  int i, k = 1;
+  unsigned long summ=0;
   l=0;
   r=255;
   node *leaves[256*2-1], *tmp;
