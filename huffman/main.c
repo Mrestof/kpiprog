@@ -23,6 +23,9 @@ int main(int argc, char **argv) {
     return 1;
   }
   res = calc_freq(argv[1]);
+  for(int i=0;i<256;i++)
+    if(freq[i]>0)
+    printf("%d %d-\n",i,freq[i]);
   if (res != 0) {
     printf("Error  in  calc_freq!  %s\n", strerror(errno));
     return 1;
@@ -31,6 +34,7 @@ int main(int argc, char **argv) {
   compress(build_tree(), 0, 0);
   for (int i=0;i<256;i++)
   {
+    if (masks[i]>0)
     printf("%d: %x, %d\n",i, codes[i], masks[i]);
   }
   return 0;
@@ -88,6 +92,8 @@ node *build_tree() { //Готове дерево
 
   for (i = 0; i < 511; i++) {
     leaves[i] = (node *) malloc(sizeof(node));
+    leaves[i]->c=0;
+    leaves[i]->freq=0;
   }
   for (i = 0; i < 256; i++)
   {
@@ -123,13 +129,13 @@ node *build_tree() { //Готове дерево
 }
 
 void compress(node *tmp, char code, char len){
-  if(tmp->c>0) {
+  if(tmp->left==NULL) {
     codes[tmp->c]=code;
     masks[tmp->c]=len;
     return;
   }
 
 
-  compress(tmp->right, code<<1, len+1);
-  compress(tmp->left, (code<<1)+1, len+1);
+  compress(tmp->right, code<<1, len++);
+  compress(tmp->left, (code<<1)+1, len++);
 }
