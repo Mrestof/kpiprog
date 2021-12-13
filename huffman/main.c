@@ -10,33 +10,41 @@ typedef struct _node {
   unsigned char c;
 } node;
 unsigned long freq[256]; // arr of frequencies, index corresponds to char code
-int l,r;
-char codes[256]={0}, masks[256]={0};
+int l,r, buff_size=0, buff_pos=0;
+unsigned char codes[256]={0}, masks[256]={0};
+unsigned char *buffer;
+
 int calc_freq(const char *input);
 node *build_tree();
-void compress(node *tmp, char code, char len);
+void compress(node *tmp, unsigned char code, unsigned char len);
+void insert(unsigned char c);
 
 int main(int argc, char **argv) {
   int res;
+  FILE *inp, *out;
+  char c;
   if (argc < 3) {
     printf("usage:  %s  <input_file>  <output_file>\n", argv[0]);
     return 1;
   }
   res = calc_freq(argv[1]);
-  for(int i=0;i<256;i++)
-    if(freq[i]>0)
-    printf("%d %d-\n",i,freq[i]);
-  if (res != 0) {
+  if (res < 0) {
     printf("Error  in  calc_freq!  %s\n", strerror(errno));
     return 1;
   }
-
+  buffer = (unsigned char *)malloc( res );
   compress(build_tree(), 0, 0);
-  for (int i=0;i<256;i++)
-  {
-    if (masks[i]>0)
-    printf("%d: %x, %d\n",i, codes[i], masks[i]);
+
+  if ((inp = fopen(argv[1], "rb")) == NULL) { // exit if file can't be opened
+    return -1;
   }
+  while((c=fgetc(inp)) != EOF)
+    insert(c);
+
+  if ((out = fopen(argv[2], "wb")) == NULL) { // exit if file can't be opened
+    return -1;
+  }
+  fwrite(buffer, buff_size+1, 1, out);
   return 0;
 }
 
@@ -45,22 +53,23 @@ int calc_freq(const char *input) {
    * `freq` array.
    */
   FILE *inp;
-  int n;
+  int n, size=0;
   unsigned char buff[BLOCKSIZE];
 
   // by default pointer is pointing to NULL
   if ((inp = fopen(input, "rb")) == NULL) { // exit if file can't be opened
-    return 1;
+    return -1;
   }
 
   do {
     n = fread(buff, sizeof (char), 1, inp);
+    size+=n;
     for (int i = 0; i < n; ++i) {
       freq[buff[i]]++;
     }
   } while (n);
-
-  return 0;
+  fclose(inp);
+  return size;
 }
 
 node *build_tree() { //Готове дерево
@@ -115,6 +124,7 @@ node *build_tree() { //Готове дерево
         leaves[i+1]->freq = leaves[i]->freq;
         leaves[i+1]->left = leaves[i]->left;
         leaves[i+1]->right = leaves[i]->right;
+        leaves[i+1]->c=leaves[i]->c;
         i--;
       }
 
@@ -122,20 +132,43 @@ node *build_tree() { //Готове дерево
       leaves[i]->freq = tmp->freq;
       leaves[i]->left = tmp->left;
       leaves[i]->right = tmp->right;
+      leaves[i]->c = tmp->c;
 
       r++;
     }
+
   return tmp;
 }
 
-void compress(node *tmp, char code, char len){
+void compress(node *tmp, unsigned char code, unsigned char len){
   if(tmp->left==NULL) {
     codes[tmp->c]=code;
     masks[tmp->c]=len;
     return;
   }
 
+  compress(tmp->right, code<<1, len+1);
+  compress(tmp->left, (code<<1)+1, len+1);
+}
 
-  compress(tmp->right, code<<1, len++);
-  compress(tmp->left, (code<<1)+1, len++);
+void insert(unsigned char c){
+  //buff_pos buff_size buffer[]
+  //codes[c], masks[c]
+  unsigned char mask=masks[c], code=codes[c], k, x;
+  while(mask>0) {
+    if (mask < 8 - buff_pos) {
+      buffer[buff_size] |= code<<buff_pos;
+      buff_pos+=mask;
+      mask=0;
+    } else {
+      k = 8-buff_pos;
+      x = ~(0xff<<k);
+      x = code & x;
+      code >>= k;
+      buffer[buff_size] |= x << buff_pos;
+      buff_pos = 0;
+      buff_size ++;
+      mask -= k;
+    }
+  }
 }
