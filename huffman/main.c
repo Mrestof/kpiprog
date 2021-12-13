@@ -8,14 +8,13 @@ typedef struct _node {
   struct _node *left, *right;
   unsigned long freq;
   unsigned char c;
-  char *code;
 } node;
 unsigned long freq[256]; // arr of frequencies, index corresponds to char code
 int l,r;
-char *codes[256];
+char codes[256]={0}, masks[256]={0};
 int calc_freq(const char *input);
 node *build_tree();
-int compress(node *tmp);
+void compress(node *tmp, char code, char len);
 
 int main(int argc, char **argv) {
   int res;
@@ -29,8 +28,11 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  compress(build_tree());
-
+  compress(build_tree(), 0, 0);
+  for (int i=0;i<256;i++)
+  {
+    printf("%d: %x, %d\n",i, codes[i], masks[i]);
+  }
   return 0;
 }
 
@@ -120,20 +122,14 @@ node *build_tree() { //Готове дерево
   return tmp;
 }
 
-int compress(node *tmp){
+void compress(node *tmp, char code, char len){
   if(tmp->c>0) {
-    codes[tmp->c]=malloc(sizeof(tmp->code));
-    codes[tmp->c]=tmp->code;
-    return 0;
+    codes[tmp->c]=code;
+    masks[tmp->c]=len;
+    return;
   }
-  tmp->right->code = malloc(sizeof(tmp->code)+1);
-  tmp->left->code = malloc(sizeof(tmp->code)+1);
-  tmp->right->code = tmp->code;
-  strncat(tmp->right->code,"0",1);
-  tmp->left->code = tmp->code;
-  strncat(tmp->left->code,"1",1);
-  compress(tmp->right);
-  compress(tmp->left);
 
-  return 0;
+
+  compress(tmp->right, code<<1, len+1);
+  compress(tmp->left, (code<<1)+1, len+1);
 }
